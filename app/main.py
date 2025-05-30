@@ -1,12 +1,6 @@
 from fastapi import FastAPI
-from dotenv import load_dotenv
-import os
-load_dotenv()
+from app.api.index import router
 
 app = FastAPI()
+app.include_router(router)
 
-print(os.getenv("thisVar"))
-
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
