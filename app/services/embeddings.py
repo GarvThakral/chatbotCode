@@ -5,8 +5,6 @@ from sentence_transformers import SentenceTransformer
 from app.db.database import store_in_db
 
 def read_and_embedd(fileLocation,id):
-    print(fileLocation,id)
-    return
     reader = PdfReader(fileLocation)
     num_pages = reader.get_num_pages()
 
