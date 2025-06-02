@@ -16,7 +16,7 @@ from nltk import sent_tokenize
 
 # Import the globally loaded model from the main app file
 # Assuming your main FastAPI file is named main.py and is at the project root
-from main import global_embedding_model 
+from app.main import global_embedding_model
 
 SECRET_KEY = "s3cret" # In a real app, load this securely from environment variables
 ALGORITHM = "HS256"
