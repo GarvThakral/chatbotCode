@@ -59,7 +59,6 @@ async def ask(request: AskRequest):
     gemini_result = get_answer(result["texts"][0],user_input)
     return {"result":gemini_result}
 
-
 @router.post("/embedd")
 async def embedd(file: UploadFile = File(...), token: str = Form(...)):
     try:
@@ -67,7 +66,7 @@ async def embedd(file: UploadFile = File(...), token: str = Form(...)):
         if file.content_type != "application/pdf":
             raise HTTPException(status_code=400, detail="Please upload a PDF file!!")
 
-        # Decode JWT with proper error handling
+        # Decode JWT
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             user_id = payload.get("userId")
@@ -78,47 +77,18 @@ async def embedd(file: UploadFile = File(...), token: str = Form(...)):
         except jwt.InvalidTokenError:
             raise HTTPException(status_code=401, detail="Invalid token")
 
-        # Construct file path
-        file_dir = f"files/{user_id}"
-        file_location = f"{file_dir}/{file.filename}"
-        
-        try:
-            os.makedirs(file_dir, exist_ok=True)
-        except OSError as e:
-            raise HTTPException(status_code=500, detail=f"Failed to create directory: {str(e)}")
+        # Process the file directly from the UploadFile object
+        read_and_embedd(file.file, user_id)
 
-        # Save file to disk
-        try:
-            with open(file_location, "wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to save file: {str(e)}")
-
-        try:
-            # Call your embedding logic
-            read_and_embedd(file_location, user_id)
-
-            return {
-                "pdf_name": file.filename,
-                "Content-Type": file.content_type,
-                "file_location": file_location,
-                "file_size": f"{os.path.getsize(file_location) / 1_048_576:.2f} MB",
-            }
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Failed to process embeddings: {str(e)}")
-        finally:
-            # Delete the file after processing (whether embedding succeeded or not)
-            try:
-                if os.path.exists(file_location):
-                    os.remove(file_location)
-            except OSError:
-                pass  # Ignore file deletion errors
-
+        # Return response
+        return {
+            "pdf_name": file.filename,
+            "Content-Type": file.content_type,
+            # Note: file_size and file_location are omitted since we’re not saving to disk
+        }
     except HTTPException:
-        # Re-raise HTTP exceptions (these will have proper CORS headers)
         raise
     except Exception as e:
-        # Catch any other unexpected exceptions
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 class TokenRequest(BaseModel):
     token: str
