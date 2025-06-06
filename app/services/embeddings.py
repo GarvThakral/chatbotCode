@@ -4,38 +4,31 @@ from nltk import sent_tokenize
 from sentence_transformers import SentenceTransformer
 from app.db.database import store_in_db
 
-def read_and_embedd(file, id):
-    # Initialize PdfReader with a file-like object
-    reader = PdfReader(file)
+def read_and_embedd(fileLocation,id):
+    reader = PdfReader(fileLocation)
+    num_pages = reader.get_num_pages()
+
+    pages_text = []
+    for i in range(num_pages):
+        pages_text.append(reader.pages[i].extract_text())
+
+    pages_text_joined = " ".join(pages_text)
+
+    sentences = sent_tokenize(pages_text_joined)
+
+    chunk = ""
+    chunk_vec = []
+
+
+    for sentence in sentences:
+        if(len(sentence+chunk) <= 500):
+            chunk += sentence
+        else:
+            chunk_vec.append(chunk)
+            chunk = sentence
+
+    chunk_vec.append(chunk)
     model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    chunk = ""         # Current chunk being built
-    chunk_list = []    # List of chunks for batch embedding
-    
-    # Process one page at a time
-    for page in reader.pages:
-        page_text = page.extract_text()  # Extract text from the current page
-        sentences = sent_tokenize(page_text)  # Tokenize into sentences
-        
-        # Build chunks incrementally
-        for sentence in sentences:
-            if len(chunk + sentence) <= 500:
-                chunk += sentence  # Add sentence to current chunk
-            else:
-                if chunk:
-                    chunk_list.append(chunk)  # Add full chunk to list
-                    # Process in batches of 10
-                    if len(chunk_list) >= 10:
-                        embeddings = model.encode(chunk_list)
-                        store_in_db(chunk_list, embeddings, id)
-                        chunk_list = []  # Clear the list after storing
-                chunk = sentence  # Start new chunk with current sentence
-    
-    # Handle remaining chunk
-    if chunk:
-        chunk_list.append(chunk)
-    
-    # Process any remaining chunks
-    if chunk_list:
-        embeddings = model.encode(chunk_list)
-        store_in_db(chunk_list, embeddings, id)
+    embeddings = model.encode(chunk_vec)
+
+    store_in_db(chunk_vec,embeddings,id)
