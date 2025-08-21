@@ -16,7 +16,7 @@ def store_in_db(chunk_vec, embeddings, userId):
         coll = client.get_or_create_collection("chatbotDocs")
         coll.add(
             documents=chunk_vec,
-            embeddings=embeddings.tolist(),
+            embeddings=embeddings,
             ids=ids,
             metadatas=metadatas
         )

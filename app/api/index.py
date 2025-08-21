@@ -3,8 +3,8 @@ import os
 import shutil
 from dotenv import load_dotenv
 from pydantic import BaseModel
-from sentence_transformers import SentenceTransformer
 from app.db.database import query_from_database
+from langchain_cohere import CohereEmbeddings
 from app.services.gemini_response import get_answer
 from app.services.embeddings import read_and_embedd
 from app.db.database import delete_user_embeddings,has_user_embeddings
@@ -19,7 +19,6 @@ load_dotenv()
 
 
 router = APIRouter()
-
 
 print(os.getenv("thisVar"))
 
@@ -49,9 +48,10 @@ async def ask(request: AskRequest):
     user_input = request.question
     payload = jwt.decode(request.user_id, SECRET_KEY, algorithms=[ALGORITHM])
     user_id = payload.get("userId")
-    print(user_id)
-    model = SentenceTransformer('all-MiniLM-L6-v2')
-    embeddings = model.encode(user_input)
+    print(user_input)
+    embeddings = CohereEmbeddings(model="embed-english-light-v3.0")
+    embeddings = embeddings.embed_documents([user_input])
+    print(embeddings)
     result = query_from_database(embeddings,user_id)
     print("DB result:", result)
     print("Texts:", result.get("texts", []))

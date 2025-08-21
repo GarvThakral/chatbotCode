@@ -18,7 +18,7 @@ async def lifespan(app: FastAPI):
         # Download required NLTK data
         nltk.download('punkt', download_dir=nltk_data_dir, quiet=True)
         nltk.download('punkt_tab', download_dir=nltk_data_dir, quiet=True)
-        nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True)  # You might need this too
+        nltk.download('stopwords', download_dir=nltk_data_dir, quiet=True) 
         print("NLTK data downloaded successfully")
     except Exception as e:
         print(f"Error downloading NLTK data: {e}")
